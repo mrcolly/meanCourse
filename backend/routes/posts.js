@@ -3,6 +3,7 @@ const multer = require("multer");
 const fs = require('fs');
 
 const Post = require("../models/post");
+const chechAuth = require('../middleware/check-auth')
 
 const router = express.Router();
 
@@ -33,6 +34,7 @@ const storage = multer.diskStorage({
 
 router.post(
   "",
+  chechAuth,
   multer({ storage: storage }).single("image"),
   (req, res, next) => {
     const url = req.protocol + "://" + req.get("host");
@@ -55,6 +57,7 @@ router.post(
 
 router.put(
   "/:id",
+  chechAuth,
   multer({ storage: storage }).single("image"),
   (req, res, next) => {
     let imagePath = req.body.imagePath;
@@ -108,7 +111,9 @@ router.get("/:id", (req, res, next) => {
   });
 });
 
-router.delete("/:id", (req, res, next) => {
+router.delete("/:id",
+chechAuth,
+(req, res, next) => {
   Post.findById(req.params.id).then(post => {
     if (post) {
       Post.deleteOne({ _id: req.params.id }).then(result => {
