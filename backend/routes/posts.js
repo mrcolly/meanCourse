@@ -41,7 +41,8 @@ router.post(
     const post = new Post({
       title: req.body.title,
       content: req.body.content,
-      imagePath: url + "/images/" + req.file.filename
+      imagePath: url + "/images/" + req.file.filename,
+      creator: req.userData.userId
     });
     post.save().then(createdPost => {
       res.status(201).json({
@@ -69,11 +70,16 @@ router.put(
       _id: req.body.id,
       title: req.body.title,
       content: req.body.content,
-      imagePath: imagePath
+      imagePath: imagePath,
+      creator: req.userData.userId
     });
     console.log(post);
-    Post.updateOne({ _id: req.params.id }, post).then(result => {
-      res.status(200).json({ message: "Update successful!" });
+    Post.updateOne({ _id: req.params.id, creator: req.userData.userId }, post).then(result => {
+      if(result.nModified > 0){
+        res.status(200).json({ message: "Update successful!" });
+      } else {
+        res.status(401).json({ message: "not authorized!" });
+      }
     });
   }
 );
@@ -116,13 +122,17 @@ chechAuth,
 (req, res, next) => {
   Post.findById(req.params.id).then(post => {
     if (post) {
-      Post.deleteOne({ _id: req.params.id }).then(result => {
-        let path = post.imagePath.split('images/')[1];
-        fs.unlink('./backend/images/'+path, (err) => {
+      Post.deleteOne({ _id: req.params.id, creator: req.userData.userId }).then(result => {
+        if(result.n > 0){
+          let path = post.imagePath.split('images/')[1];
+          fs.unlink('./backend/images/'+path, (err) => {
           if (err) throw err;
-          console.log('successfully deleted images/'+path);
-        });
-        res.status(200).json({ message: "Post deleted!" });
+            console.log('successfully deleted images/'+path);
+          });
+          res.status(200).json({ message: "Post deleted!" });
+        } else {
+          res.status(401).json({ message: "not authorized!" });
+        }
       });
     } else {
       res.status(404).json({ message: "Post not found!" });
