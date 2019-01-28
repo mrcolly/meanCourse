@@ -21,7 +21,7 @@ router.post('/signup', (req, res, next) => {
           });
         })
         .catch(err =>{
-          res.status(500).json({
+          res.status(401).json({
             message: 'error on user creation',
             result: err
           })
@@ -48,7 +48,7 @@ router.post('/login', (req, res, next) => {
         })
       }
       const token= jwt.sign({email: fetchedUser.email, userId: fetchedUser._id}, 'superSecretLongString', {expiresIn: '1h'});
-      res.status(200).json({
+      return res.status(200).json({
         token: token,
         expiresIn: 3600,
         userId: fetchedUser._id
